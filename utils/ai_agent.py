@@ -27,7 +27,7 @@ def initialize_agent():
         ]
         
         st.session_state.chat_session = st.session_state.gemini_client.chats.create(
-            model="gemini-3.5-flash",
+            model="gemini-3.5-flash-lite",
             config=types.GenerateContentConfig(tools=agent_tools)
         )
         st.session_state.messages = []
