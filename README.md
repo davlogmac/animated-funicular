@@ -1,0 +1,2 @@
+# animated-funicular
+stockbot app
