@@ -5,7 +5,8 @@ from google.genai import types
 from utils.finance_tools import (
     get_stock_price, get_company_fundamentals, 
     get_recent_news, get_technical_summary, get_portfolio_holdings,
-    get_watchlist
+    get_watchlist, add_to_watchlist, remove_from_watchlist, 
+    update_portfolio, remove_from_portfolio
 )
 
 def initialize_agent():

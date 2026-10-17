@@ -1,6 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import streamlit as st
+from utils.data_manager import save_data
 
 def get_asset_type(ticker: str) -> str:
     try:
@@ -94,3 +95,55 @@ def get_watchlist() -> str:
         return "The user's watchlist is currently empty."
         
     return "User's Watchlist (Favourites):\n" + "\n".join([f"• {tkr}" for tkr in favs])
+
+def add_to_watchlist(ticker: str) -> str:
+    """Adds a stock ticker to the user's Smart Watchlist."""
+    ticker = ticker.upper().strip()
+    if ticker not in st.session_state.favourites:
+        st.session_state.favourites.append(ticker)
+        save_data()
+        return f"Successfully added {ticker} to your watchlist."
+    return f"{ticker} is already in your watchlist."
+
+def remove_from_watchlist(ticker: str) -> str:
+    """Removes a stock ticker from the user's Smart Watchlist."""
+    ticker = ticker.upper().strip()
+    if ticker in st.session_state.favourites:
+        st.session_state.favourites.remove(ticker)
+        save_data()
+        return f"Successfully removed {ticker} from your watchlist."
+    return f"{ticker} was not found in your watchlist."
+
+def update_portfolio(ticker: str, shares: float, buy_date: str = "") -> str:
+    """Adds a new stock or updates the share count of an existing stock in the user's portfolio. buy_date is optional (YYYY-MM-DD)."""
+    ticker = ticker.upper().strip()
+    df = st.session_state.portfolio
+    
+    asset_type = get_asset_type(ticker)
+    parsed_date = pd.to_datetime(buy_date, errors='coerce') if buy_date else pd.NaT
+
+    if ticker in df['Ticker'].values:
+        df.loc[df['Ticker'] == ticker, ['Shares', 'Buy Date']] = [shares, parsed_date]
+        action = "updated"
+    else:
+        new_row = pd.DataFrame([{"Ticker": ticker, "Shares": shares, "Buy Date": parsed_date, "Asset Type": asset_type}])
+        df = pd.concat([df, new_row], ignore_index=True)
+        action = "added"
+        
+    st.session_state.portfolio = df
+    st.session_state.temp_portfolio = df.copy() # Sync the staging editor so the UI doesn't overwrite it
+    save_data()
+    
+    return f"Successfully {action} {ticker} in your portfolio ({shares} shares)."
+
+def remove_from_portfolio(ticker: str) -> str:
+    """Removes a stock entirely from the user's portfolio."""
+    ticker = ticker.upper().strip()
+    df = st.session_state.portfolio
+    
+    if ticker in df['Ticker'].values:
+        st.session_state.portfolio = df[df['Ticker'] != ticker].reset_index(drop=True)
+        st.session_state.temp_portfolio = st.session_state.portfolio.copy()
+        save_data()
+        return f"Successfully removed {ticker} from your portfolio."
+    return f"{ticker} was not found in your portfolio."
